@@ -5267,9 +5267,71 @@ S_require_file(pTHX_ SV *sv)
                     }
 
                     /* diag_listed_as: Can't locate %s */
-                    DIE(aTHX_
-                        "Can't locate %s in @INC%" SVf " (@INC entries checked:%" SVf ")",
-                        name, msg, inc);
+                    {
+                        SV *inc_pretty = newSVpvs("");
+                        AV *inc_av = GvAVn(PL_incgv);
+
+                        if (inc_av) {
+                            SSize_t i;
+                            for (i = 0; i <= AvFILL(inc_av); i++) {
+                                SV **svp = av_fetch(inc_av, i, 0);
+                                if (svp && *svp && SvOK(*svp)) {
+                                    sv_catpvf(inc_pretty,
+                                            "\n  %s",
+                                            SvPV_nolen(*svp));
+                                }
+                            }
+                        }
+
+                        /* Build Derp::Derp.pm from name (Derp/Derp.pm) */
+                        SV *pretty_mod = newSVpv(name, 0);
+
+                        /* remove trailing .pm if present */
+                        STRLEN len;
+                        char *p = SvPV(pretty_mod, len);
+                        if (len > 3 && strEQ(p + len - 3, ".pm")) {
+                            SvCUR_set(pretty_mod, len - 3);
+                            *SvEND(pretty_mod) = '\0';
+                        }
+
+                        /* convert / to :: */
+                        for (char *c = SvPVX(pretty_mod); *c; c++) {
+                            if (*c == '/')
+                                *c = ':';
+                        }
+
+                        /* collapse single : into :: */
+                        {
+                            SV *tmp = newSVpvs("");
+                            char *c = SvPV_nolen(pretty_mod);
+                            while (*c) {
+                                if (*c == ':')
+                                    sv_catpvs(tmp, "::");
+                                else
+                                    sv_catpvn(tmp, c, 1);
+                                c++;
+                            }
+                            SvREFCNT_dec(pretty_mod);
+                            pretty_mod = tmp;
+                        }
+
+                        sv_catpvs(pretty_mod, ".pm");
+
+                        DIE(aTHX_
+                            "Can't locate %s in @INC\n"
+                            "\n"
+                            "See: perldoc -v @INC\n"
+                            "\n"
+                            "You may need to install the %" SVf " module:\n"
+                            "https://metacpan.org/search?q=%" SVf "\n"
+                            "\n"
+                            "@INC entries checked:%" SVf,
+                            name,
+                            pretty_mod,
+                            pretty_mod,
+                            inc_pretty);
+                    }
+
                 }
             }
             DIE(aTHX_ "Can't locate %s", name);
