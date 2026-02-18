@@ -5315,8 +5315,6 @@ S_require_file(pTHX_ SV *sv)
                             pretty_mod = tmp;
                         }
 
-                        sv_catpvs(pretty_mod, ".pm");
-
                         DIE(aTHX_
                             "Can't locate %s in @INC\n"
                             "\n"
