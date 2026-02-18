@@ -497,29 +497,33 @@ ERR
 
 #line 447
 use_ok('Hooble::mooble::yooble');
-my $more_err_re = <<ERR;
-#   Failed test 'use Hooble::mooble::yooble;'
-#   at $Filename line 447\\.
-#     Tried to use 'Hooble::mooble::yooble'.
-#     Error:  Can't locate Hooble.* in \\\@INC .*
-ERR
+my $more_err_re = qr{
+    #   Failed test 'use Hooble::mooble::yooble;'
+    #   at \Q$Filename\E line 447\.
+    #     Tried to use 'Hooble::mooble::yooble'.
+    #     Error:  Can't locate Hooble::mooble(?:\.pm)? in \@INC
+}xm;
+
 out_like(
     qr/^\Qnot ok - use Hooble::mooble::yooble;\E\n\z/,
-    qr/^$more_err_re/
+    $more_err_re
 );
+
 
 #line 460
 require_ok('ALL::YOUR::BASE::ARE::BELONG::TO::US::wibble');
-$more_err_re = <<ERR;
-#   Failed test 'require ALL::YOUR::BASE::ARE::BELONG::TO::US::wibble;'
-#   at $Filename line 460\\.
-#     Tried to require 'ALL::YOUR::BASE::ARE::BELONG::TO::US::wibble'.
-#     Error:  Can't locate ALL.* in \\\@INC .*
-ERR
+$more_err_re = qr{
+    #   Failed test 'require ALL::YOUR::BASE::ARE::BELONG::TO::US::wibble;'
+    #   at \Q$Filename\E line 460\.
+    #     Tried to require 'ALL::YOUR::BASE::ARE::BELONG::TO::US::wibble'.
+    #     Error:  Can't locate ALL::YOUR::BASE::ARE::BELONG::TO::US::wibble(?:\.pm)? in \@INC
+}xm;
+
 out_like(
     qr/^\Qnot ok - require ALL::YOUR::BASE::ARE::BELONG::TO::US::wibble;\E\n\z/,
-    qr/^$more_err_re/
+    $more_err_re
 );
+
 
 
 END {
